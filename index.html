@@ -78,9 +78,9 @@ kbd{background:#eef1f5;border:1px solid #d0d5dd;border-radius:4px;padding:0 4px;
       <ul class="chk" id="chk"></ul>
     </div>
     <div class="panel verdict">
-      <h2>Final verdict</h2>
+      <h2>Decision</h2>
       <select id="verdict"></select>
-      <textarea id="rationale" placeholder="Final verdict notes: why this verdict + any other information"></textarea>
+      <textarea id="rationale" placeholder="Reasoning: why this decision + any other information"></textarea>
       <div class="row" style="margin-top:8px">
         <button class="primary" id="finish">Complete note</button>
         <button id="copy">Copy note</button>
@@ -136,7 +136,7 @@ const SECTIONS = [
    requiredFor:["restriction","onboarding","ato"],
    chips:["Service log reviewed; no relevant notes.","Seller contacted on ___ about ___."],
    negChips:["Complaint/dispute in service log: ___."]},
-  {id:"prevNotes", title:"Previous teammate notes", hint:"Earlier reviews, past verdicts, open follow-ups.",
+  {id:"prevNotes", title:"Previous teammate notes", hint:"Earlier reviews, past decisions, open follow-ups.",
    requiredFor:["restriction","onboarding","ato"],
    chips:["Reviewed previous notes; no open concerns.","Previous review on ___: ___.","No previous notes on account."],
    negChips:["Previous note flagged ___, still unresolved."]},
@@ -176,7 +176,7 @@ const ORDER = {
 };
 function active(){ const o=ORDER[state.caseType]; return o ? o.map(id=>SECTIONS.find(s=>s.id===id)) : SECTIONS.filter(s=>!s.only); }
 const VERDICTS = {
-  "": "- Select verdict -",
+  "": "- Select decision -",
   lift: "Lift restrictions",
   partial: "Partial lift",
   rai: "Request additional information",
@@ -277,14 +277,14 @@ function problems(){
   });
   const v=state.verdict, issues=active().filter(s=>sec(s.id).status==="issue").map(s=>s.title);
   if(!state.caseId.trim()) out.push({lvl:"wa",id:null,msg:"Case / Account ID is empty"});
-  if(!v) out.push({lvl:"er",id:"verdict",msg:"No verdict selected"});
-  if(v && !state.rationale.trim()) out.push({lvl:"er",id:"verdict",msg:"Final verdict notes are empty"});
-  if((v==="lift"||v==="approve"||v==="payApprove") && issues.length) out.push({lvl:state.rationale.trim().length>30?"wa":"er",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but issues were found in: ${issues.join(", ")}. Explain why in the final verdict notes.`});
-  if((v==="keep"||v==="decline"||v==="payDeny") && !issues.length) out.push({lvl:"wa",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but no section is marked "Issue found"`});
+  if(!v) out.push({lvl:"er",id:"verdict",msg:"No decision selected"});
+  if(v && !state.rationale.trim()) out.push({lvl:"er",id:"verdict",msg:"Reasoning is empty"});
+  if((v==="lift"||v==="approve"||v==="payApprove") && issues.length) out.push({lvl:state.rationale.trim().length>30?"wa":"er",id:"verdict",msg:`Decision is "${VERDICTS[v]}" but issues were found in: ${issues.join(", ")}. Explain why in the reasoning.`});
+  if((v==="keep"||v==="decline"||v==="payDeny") && !issues.length) out.push({lvl:"wa",id:"verdict",msg:`Decision is "${VERDICTS[v]}" but no section is marked "Issue found"`});
   if(v==="rai" && !/\b(request|need|provide|send|submit|missing)/i.test(state.rationale+sec("docs").text)) out.push({lvl:"wa",id:"verdict",msg:"Requesting info: list exactly which documents/info are needed"});
   if(state.caseType==="onboarding" && (v==="lift"||v==="partial"||v==="keep")) out.push({lvl:"wa",id:"verdict",msg:"Onboarding case: did you mean Approve / Decline / Request info?"});
   if(state.caseType!=="onboarding" && (v==="approve")) out.push({lvl:"wa",id:"verdict",msg:"Approve onboarding selected on a non-onboarding case"});
-  if(sec("ato").status==="issue" && !/(secure|reset|ato|takeover|contact)/i.test(state.rationale)) out.push({lvl:"wa",id:"verdict",msg:"ATO issue found: final verdict notes should say how the ATO is handled"});
+  if(sec("ato").status==="issue" && !/(secure|reset|ato|takeover|contact)/i.test(state.rationale)) out.push({lvl:"wa",id:"verdict",msg:"ATO issue found: reasoning should say how the ATO is handled"});
   return out;
 }
 function check(){
@@ -311,8 +311,8 @@ function note(){
   L.push("");
   active().forEach((s,i)=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
   L.push("");
-  L.push(`Verdict: ${VERDICTS[state.verdict]||"-"}`);
-  L.push(`Final verdict notes: ${state.rationale.trim()||"-"}`);
+  L.push(`Decision: ${VERDICTS[state.verdict]||"-"}`);
+  L.push(`Reasoning: ${state.rationale.trim()||"-"}`);
   return L.join("\n");
 }
 async function copyNote(){
