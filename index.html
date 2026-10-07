@@ -108,46 +108,73 @@ kbd{background:#eef1f5;border:1px solid #d0d5dd;border-radius:4px;padding:0 4px;
 const CASE_TYPES = {
   restriction: "Restriction review",
   onboarding:  "Onboarding / KYC",
-  ato:         "ATO review"
+  ato:         "ATO review",
+  payout:      "Payout review"
 };
 const SECTIONS = [
-  {id:"profile", title:"1. Account profile", hint:"Business type, age of account, KYC status, volume, current restrictions.",
+  {id:"profile", title:"Account profile", hint:"Business type, age of account, KYC status, volume, current restrictions.",
    requiredFor:["restriction","onboarding","ato"],
    chips:["Account active since ___, business type ___.","KYC verified.","Current restriction: ___ placed on ___.","Volume in line with stated business."],
    negChips:["Profile details do not match business activity."]},
-  {id:"linked", title:"2. Linked account review", hint:"Accounts linked by ID, bank, device, IP, address. Review each one found.",
-   requiredFor:["restriction","onboarding","ato"],
+  {id:"linked", title:"Linked account review", hint:"Accounts linked by ID, bank, device, IP, address. Review each one found.",
+   requiredFor:["restriction","onboarding","ato","payout"],
    chips:["No linked accounts found.","Linked accounts found, all in good standing.","Reviewed linked account ___: no concerns."],
    negChips:["Linked to restricted/closed account ___.","Linked account ___ shows ___."]},
-  {id:"ato", title:"3. ATO indicators", hint:"Device/IP changes, password/email/phone/bank changes, unusual logins.",
-   requiredFor:["restriction","onboarding","ato"],
+  {id:"ato", title:"ATO indicators", hint:"Device/IP changes, password/email/phone/bank changes, unusual logins.",
+   requiredFor:["restriction","onboarding","ato","payout"],
    chips:["No ATO indicators: no new device/IP, no credential or bank change."],
    negChips:["New device/IP from ___ before activity.","Email/password/bank changed on ___."]},
-  {id:"txn", title:"4. Transaction log review", hint:"Inflow vs outflow, number of transactions, transaction types.",
+  {id:"txn", title:"Transaction log review", hint:"Inflow vs outflow, number of transactions, transaction types.",
    requiredFor:["restriction","ato"],
    chips:["Inflow ___ / outflow ___ over ___ days.","___ transactions in review period.","Transaction types: ___.","Activity consistent with stated business."],
    negChips:["Quick in-out / withdrawal pattern seen.","Possible cash advancing: ___."]},
-  {id:"counterparty", title:"5. Counterparty / money movement", hint:"Who the money moved to/from and how (P2P, bank, wallet, etc.).",
+  {id:"counterparty", title:"Counterparty / money movement", hint:"Who the money moved to/from and how (P2P, bank, wallet, etc.).",
    requiredFor:["restriction","ato"], conditional:"counterpartyNeeded",
    chips:["Counterparties reviewed; no concerns.","Money moved via ___ to ___.","No P2P movement seen."],
    negChips:["P2P movement to ___.","Counterparty ___ linked to fraud/chargebacks."]},
-  {id:"serviceLog", title:"6. Service log notes", hint:"Customer contacts, complaints, disputes, promises made.",
+  {id:"serviceLog", title:"Service log notes", hint:"Customer contacts, complaints, disputes, promises made.",
    requiredFor:["restriction","onboarding","ato"],
    chips:["Service log reviewed; no relevant notes.","Seller contacted on ___ about ___."],
    negChips:["Complaint/dispute in service log: ___."]},
-  {id:"prevNotes", title:"7. Previous teammate notes", hint:"Earlier reviews, past verdicts, open follow-ups.",
+  {id:"prevNotes", title:"Previous teammate notes", hint:"Earlier reviews, past verdicts, open follow-ups.",
    requiredFor:["restriction","onboarding","ato"],
    chips:["Reviewed previous notes; no open concerns.","Previous review on ___: ___.","No previous notes on account."],
    negChips:["Previous note flagged ___, still unresolved."]},
-  {id:"docs", title:"8. Documents provided (if any)", hint:"List each document, whether it is valid and matches the account.",
+  {id:"docs", title:"Documents provided (if any)", hint:"List each document, whether it is valid and matches the account.",
    requiredFor:["onboarding"],
    chips:["No documents provided.","ID document verified, name matches.","Proof of address verified.","Invoices/supplier docs verified."],
    negChips:["Document missing: ___.","Document appears altered / mismatched."]},
-  {id:"external", title:"9. External search", hint:"Pointer: Is it a personal account? If business, search name, website, social media, reviews, news, scam reports. Write what you found below.",
+  {id:"external", title:"External search", hint:"Pointer: Is it a personal account? If business, search name, website, social media, reviews, news, scam reports. Write what you found below.",
    requiredFor:["restriction","onboarding","ato"],
    chips:["Personal account: no business presence expected online.","External search done: business found at ___, matches profile.","No adverse news or scam reports found."],
-   negChips:["No online presence for stated business.","Adverse news / scam reports found: ___."]}
+   negChips:["No online presence for stated business.","Adverse news / scam reports found: ___."]},
+  /* ---- Payout review only ---- */
+  {id:"acctAge", only:"payout", title:"Account age", hint:"Is the account newly created or old? Note the creation date.",
+   requiredFor:["payout"],
+   chips:["Old account, created on ___.","Account created on ___ (___ days old)."],
+   negChips:["Newly created account (___ days old)."]},
+  {id:"email", only:"payout", title:"Email domain", hint:"Is the email from a free domain (Gmail, Yahoo, Outlook...) or a business domain?",
+   requiredFor:["payout"],
+   chips:["Business email domain (___), matches the business.","Free email domain (___)."],
+   negChips:["Email domain does not match the business."]},
+  {id:"processing", only:"payout", title:"Processing", hint:"How much processing is on the account: amount, number of transactions, period.",
+   requiredFor:["payout"],
+   chips:["Processing of ___ over ___ (___ transactions).","Processing in line with the business model."],
+   negChips:["Very low / no processing history.","Sudden spike in processing: ___."]},
+  {id:"bizModel", only:"payout", title:"Business model verification", hint:"Is the business model verified? A website is not required.",
+   requiredFor:["payout"],
+   chips:["Business model verified: ___.","Website: ___ (optional)."],
+   negChips:["Business model not verified."]},
+  {id:"mcc", only:"payout", title:"MCC risk", hint:"MCC code and its risk level: low, medium or high.",
+   requiredFor:["payout"],
+   chips:["MCC ___: low risk.","MCC ___: medium risk."],
+   negChips:["MCC ___: high risk."]}
 ];
+/* Review types with their own section list and order. Others use every section without "only". */
+const ORDER = {
+  payout: ["acctAge","email","processing","bizModel","mcc","linked","ato"]
+};
+function active(){ const o=ORDER[state.caseType]; return o ? o.map(id=>SECTIONS.find(s=>s.id===id)) : SECTIONS.filter(s=>!s.only); }
 const VERDICTS = {
   "": "- Select verdict -",
   lift: "Lift restrictions",
@@ -155,7 +182,16 @@ const VERDICTS = {
   rai: "Request additional information",
   keep: "Keep restrictions / no change",
   approve: "Approve onboarding",
-  decline: "Decline / close"
+  decline: "Decline / close",
+  payApprove: "Approve payout",
+  payDeny: "Deny payout"
+};
+/* Verdicts offered for each review type */
+const VERDICTS_FOR = {
+  restriction: ["lift","partial","rai","keep","decline"],
+  onboarding:  ["approve","decline","rai"],
+  ato:         ["lift","partial","rai","keep","decline"],
+  payout:      ["payApprove","payDeny","rai"]
 };
 /* Words that suggest something important was mentioned. Used to cross-check notes. */
 const KEYWORDS = {
@@ -173,10 +209,16 @@ const S = id => state.sec[id] || (state.sec[id] = {text:"",status:""});
 
 // header
 Object.entries(CASE_TYPES).forEach(([k,v])=>$("#caseType").add(new Option(v,k)));
-Object.entries(VERDICTS).forEach(([k,v])=>$("#verdict").add(new Option(v,k)));
+function fillVerdicts(){
+  const el=$("#verdict"), ok=VERDICTS_FOR[state.caseType]||Object.keys(VERDICTS).filter(k=>k);
+  el.innerHTML=""; ["",...ok].forEach(k=>el.add(new Option(VERDICTS[k],k)));
+  if(!ok.includes(state.verdict)) state.verdict="";
+  el.value=state.verdict;
+}
+fillVerdicts();
 ["caseId","caseType","reviewer","target","verdict","rationale"].forEach(f=>{
   const el=$("#"+f); el.value=state[f];
-  el.addEventListener("input",()=>{state[f]=el.value; save(); if(f==="caseType") render(); else check();});
+  el.addEventListener("input",()=>{state[f]=el.value; save(); if(f==="caseType"){ fillVerdicts(); save(); render(); } else check();});
 });
 
 // sections
@@ -186,15 +228,15 @@ function isRequired(sec){
   return false;
 }
 function conditionMet(c){
-  const all = SECTIONS.map(s=>S(s.id).text).join("\n");
+  const all = active().map(s=>S(s.id).text).join("\n");
   if(c==="counterpartyNeeded") return KEYWORDS.counterpartyNeeded.test(all.replace(S("counterparty").text,""));
   return false;
 }
 function render(){
   const wrap=$("#sections"); wrap.innerHTML="";
-  SECTIONS.forEach((sec,i)=>{
+  active().forEach((sec,i)=>{
     const d=document.createElement("div"); d.className="sec"; d.id="s-"+sec.id;
-    d.innerHTML=`<h3>${sec.title} <span class="req" hidden>Required</span>
+    d.innerHTML=`<h3>${i+1}. ${sec.title} <span class="req" hidden>Required</span>
       <span class="status">${[["checked","Checked"],["issue","Issue found"],["na","N/A"]].map(([v,l])=>`<button data-v="${v}">${l}</button>`).join("")}</span></h3>
       <div class="hint">${sec.hint}</div>
       <textarea placeholder="What did you check and what did you find?"></textarea>
@@ -214,7 +256,7 @@ function render(){
 }
 function setStatus(id,v,rerun=true){ S(id).status=v; save(); if(rerun) check(); else paint(); }
 function paint(){
-  SECTIONS.forEach(sec=>{
+  active().forEach(sec=>{
     const d=$("#s-"+sec.id), st=S(sec.id).status, req=isRequired(sec);
     d.querySelectorAll(".status button").forEach(b=>b.classList.toggle("on",b.dataset.v===st));
     d.querySelector(".req").hidden=!req;
@@ -225,7 +267,7 @@ function paint(){
 // checker
 function problems(){
   const out=[]; const sec=id=>S(id);
-  SECTIONS.forEach(s=>{
+  active().forEach(s=>{
     const x=sec(s.id), req=isRequired(s);
     if(req && !x.status) out.push({lvl:"er",id:s.id,msg:`${s.title}: not checked yet`});
     else if(req && x.status==="na" && !x.text.trim()) out.push({lvl:"er",id:s.id,msg:`${s.title}: marked N/A, add a reason`});
@@ -233,12 +275,12 @@ function problems(){
     if(x.text.includes("___")) out.push({lvl:"er",id:s.id,msg:`${s.title}: fill in the blank (___)`});
     if(!req && s.conditional && conditionMet(s.conditional) && !x.status) out.push({lvl:"er",id:s.id,msg:`${s.title}: required, based on your notes`});
   });
-  const v=state.verdict, issues=SECTIONS.filter(s=>sec(s.id).status==="issue").map(s=>s.title);
+  const v=state.verdict, issues=active().filter(s=>sec(s.id).status==="issue").map(s=>s.title);
   if(!state.caseId.trim()) out.push({lvl:"wa",id:null,msg:"Case / Account ID is empty"});
   if(!v) out.push({lvl:"er",id:"verdict",msg:"No verdict selected"});
   if(v && !state.rationale.trim()) out.push({lvl:"er",id:"verdict",msg:"Final verdict notes are empty"});
-  if((v==="lift"||v==="approve") && issues.length) out.push({lvl:state.rationale.trim().length>30?"wa":"er",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but issues were found in: ${issues.join(", ")}. Explain why in the final verdict notes.`});
-  if((v==="keep"||v==="decline") && !issues.length) out.push({lvl:"wa",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but no section is marked "Issue found"`});
+  if((v==="lift"||v==="approve"||v==="payApprove") && issues.length) out.push({lvl:state.rationale.trim().length>30?"wa":"er",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but issues were found in: ${issues.join(", ")}. Explain why in the final verdict notes.`});
+  if((v==="keep"||v==="decline"||v==="payDeny") && !issues.length) out.push({lvl:"wa",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but no section is marked "Issue found"`});
   if(v==="rai" && !/\b(request|need|provide|send|submit|missing)/i.test(state.rationale+sec("docs").text)) out.push({lvl:"wa",id:"verdict",msg:"Requesting info: list exactly which documents/info are needed"});
   if(state.caseType==="onboarding" && (v==="lift"||v==="partial"||v==="keep")) out.push({lvl:"wa",id:"verdict",msg:"Onboarding case: did you mean Approve / Decline / Request info?"});
   if(state.caseType!=="onboarding" && (v==="approve")) out.push({lvl:"wa",id:"verdict",msg:"Approve onboarding selected on a non-onboarding case"});
@@ -247,7 +289,7 @@ function problems(){
 }
 function check(){
   paint();
-  const p=problems(), req=SECTIONS.filter(isRequired), done=req.filter(s=>S(s.id).status).length;
+  const p=problems(), req=active().filter(isRequired), done=req.filter(s=>S(s.id).status).length;
   $("#prog").style.width=(req.length?Math.round(done/req.length*100):0)+"%";
   $("#progTxt").textContent=`${done}/${req.length} required sections done`;
   const ul=$("#chk"); ul.innerHTML="";
@@ -267,7 +309,7 @@ function note(){
   const L=[]; const lbl={checked:"Checked",issue:"ISSUE",na:"N/A"};
   L.push(`Case: ${state.caseId||"-"} | ${CASE_TYPES[state.caseType]} | Reviewer: ${state.reviewer||"-"} | Time spent: ${fmt(elapsed())}`);
   L.push("");
-  SECTIONS.forEach(s=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
+  active().forEach((s,i)=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${i+1}. ${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
   L.push("");
   L.push(`Verdict: ${VERDICTS[state.verdict]||"-"}`);
   L.push(`Final verdict notes: ${state.rationale.trim()||"-"}`);
