@@ -332,7 +332,7 @@ const close=()=>$("#modal").classList.remove("show");
 $("#finish").onclick=finish; $("#copy").onclick=copyNote; $("#mBack").onclick=close;
 $("#mCopy").onclick=()=>{copyNote(); if(!problems().some(x=>x.lvl==="er")) state.running=false, tick(), save(); close();};
 $("#modal").onclick=e=>{if(e.target.id==="modal") close();};
-$("#newCase").onclick=()=>{ if(confirm("Clear this case and start a new one?")){ const r=state.reviewer,t=state.target; state=fresh(); state.reviewer=r; state.target=t; save(); ["caseId","caseType","reviewer","target","verdict","rationale"].forEach(f=>$("#"+f).value=state[f]); render(); tick(); $("#caseId").focus(); } };
+$("#newCase").onclick=()=>{ if(confirm("Clear this case and start a new one?")){ const r=state.reviewer,t=state.target,ct=state.caseType; state=fresh(); state.reviewer=r; state.target=t; state.caseType=ct; fillVerdicts(); save(); ["caseId","caseType","reviewer","target","verdict","rationale"].forEach(f=>$("#"+f).value=state[f]); render(); tick(); $("#caseId").focus(); } };
 
 // timer
 function elapsed(){ return state.elapsed + (state.running? (Date.now()-state.started)/1000 : 0); }
