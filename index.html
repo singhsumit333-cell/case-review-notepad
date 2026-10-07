@@ -118,7 +118,7 @@ const SECTIONS = [
    negChips:["Profile details do not match business activity."]},
   {id:"linked", title:"Linked account review", hint:"Accounts linked by ID, bank, device, IP, address. Review each one found.",
    requiredFor:["restriction","onboarding","ato","payout"],
-   chips:["No linked accounts found.","Linked accounts found, all in good standing.","Reviewed linked account ___: no concerns."],
+   chips:["No suspicious hard linked accounts found.","Linked accounts found, all in good standing.","Reviewed linked account ___: no concerns."],
    negChips:["Linked to restricted/closed account ___.","Linked account ___ shows ___."]},
   {id:"ato", title:"ATO indicators", hint:"Device/IP changes, password/email/phone/bank changes, unusual logins.",
    requiredFor:["restriction","onboarding","ato","payout"],
@@ -309,7 +309,7 @@ function note(){
   const L=[]; const lbl={checked:"Checked",issue:"ISSUE",na:"N/A"};
   L.push(`Case: ${state.caseId||"-"} | ${CASE_TYPES[state.caseType]} | Reviewer: ${state.reviewer||"-"} | Time spent: ${fmt(elapsed())}`);
   L.push("");
-  active().forEach((s,i)=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${i+1}. ${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
+  active().forEach((s,i)=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
   L.push("");
   L.push(`Verdict: ${VERDICTS[state.verdict]||"-"}`);
   L.push(`Final verdict notes: ${state.rationale.trim()||"-"}`);
