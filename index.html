@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case Review Notepad</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#1d2433;--muted:#667085;--line:#dde2ea;--blue:#2457d6;--green:#14804a;--amber:#b25e09;--red:#c4271b;--chip:#eef2fb}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:#16213a;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:16px;margin:0 8px 0 0}
+header input,header select{padding:6px 8px;border-radius:6px;border:1px solid #3a4766;background:#22304f;color:#fff;font:inherit}
+header label{font-size:12px;color:#b9c3d8;display:flex;flex-direction:column;gap:2px}
+.timer{margin-left:auto;display:flex;align-items:center;gap:8px}
+.clock{font:600 20px ui-monospace,Consolas,monospace;min-width:76px;text-align:right}
+.clock.warn{color:#ffb44c}.clock.over{color:#ff6b5e}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:#fff;padding:6px 10px}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+button.ghost{background:transparent;color:#fff;border-color:#3a4766}
+main{display:grid;grid-template-columns:1fr 330px;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+.sec{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.sec.done{border-left-color:var(--green)}.sec.issue{border-left-color:var(--red)}.sec.na{border-left-color:#98a2b3;opacity:.8}.sec.missing{border-left-color:var(--amber)}
+.sec.flash{box-shadow:0 0 0 3px #ffb44c}
+.sec h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.sec .hint{color:var(--muted);font-size:12px;margin:2px 0 8px}
+.req{font-size:11px;font-weight:600;color:var(--amber);background:#fff4e5;border-radius:10px;padding:1px 8px}
+.status{display:flex;gap:6px;margin-left:auto}
+.status button{padding:3px 9px;font-size:12px}
+.status button.on[data-v=checked]{background:var(--green);color:#fff;border-color:var(--green)}
+.status button.on[data-v=issue]{background:var(--red);color:#fff;border-color:var(--red)}
+.status button.on[data-v=na]{background:#667085;color:#fff;border-color:#667085}
+textarea{width:100%;min-height:62px;resize:vertical;padding:8px;border:1px solid var(--line);border-radius:8px;font:inherit}
+textarea:focus{outline:2px solid #bcd0fb;border-color:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips button{background:var(--chip);border-color:#d6def3;font-size:12px;padding:3px 8px;border-radius:14px}
+.chips button.neg{background:#fdecea;border-color:#f6c9c4}
+aside{position:sticky;top:70px;align-self:start;display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.panel h2{font-size:14px;margin:0 0 8px}
+.bar{height:8px;background:#e7ebf1;border-radius:6px;overflow:hidden;margin-bottom:8px}.bar i{display:block;height:100%;background:var(--green);width:0;transition:width .3s}
+ul.chk{list-style:none;margin:0;padding:0;max-height:42vh;overflow:auto}
+ul.chk li{padding:5px 6px;border-radius:6px;font-size:13px;display:flex;gap:6px;cursor:pointer}
+ul.chk li:hover{background:#f2f4f7}
+.ok{color:var(--green)}.wa{color:var(--amber)}.er{color:var(--red)}
+.verdict select,.verdict textarea{width:100%;margin-top:6px;padding:7px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:10}
+.modal.show{display:flex}
+.modal .box{background:#fff;border-radius:12px;max-width:720px;width:92%;max-height:86vh;overflow:auto;padding:18px}
+.modal pre{white-space:pre-wrap;background:#f6f8fb;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.5 ui-monospace,Consolas,monospace}
+kbd{background:#eef1f5;border:1px solid #d0d5dd;border-radius:4px;padding:0 4px;font-size:11px}
+.small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Case Review Notepad</h1>
+  <label>Case / Account ID<input id="caseId" placeholder="e.g. 12345678" size="14"></label>
+  <label>Review type<select id="caseType"></select></label>
+  <label>Reviewer<input id="reviewer" placeholder="Your name" size="10"></label>
+  <div class="timer">
+    <label>Target AHT (min)<input id="target" type="number" value="20" min="1" style="width:60px"></label>
+    <span class="clock" id="clock">00:00</span>
+    <button class="ghost" id="tToggle">Pause</button>
+    <button class="ghost" id="newCase" title="Clear everything and start a new case">New case</button>
+  </div>
+</header>
+
+<main>
+  <section id="sections"></section>
+  <aside>
+    <div class="panel">
+      <h2>Live checker</h2>
+      <div class="bar"><i id="prog"></i></div>
+      <div class="small" id="progTxt"></div>
+      <ul class="chk" id="chk"></ul>
+    </div>
+    <div class="panel verdict">
+      <h2>Verdict</h2>
+      <select id="verdict"></select>
+      <textarea id="rationale" placeholder="Why this verdict? (1-3 lines)"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="finish">Finish &amp; check</button>
+        <button id="copy">Copy note</button>
+      </div>
+      <p class="small">Shortcuts: <kbd>Ctrl</kbd>+<kbd>Enter</kbd> next section · <kbd>Alt</kbd>+<kbd>1/2/3</kbd> Checked/Issue/N/A · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> finish</p>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="modal"><div class="box">
+  <h2 id="mTitle"></h2>
+  <div id="mBody"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:12px">
+    <button id="mBack">Go back and fix</button>
+    <button class="primary" id="mCopy">Copy final note</button>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG: edit this block to match your team's SOP.
+   requiredFor: review types where the section must be filled.
+   chips: one-click standard phrases (saves typing = lower AHT).
+   ============================================================ */
+const CASE_TYPES = {
+  restriction: "Restriction review",
+  onboarding:  "Onboarding / KYC",
+  ato:         "ATO review"
+};
+const SECTIONS = [
+  {id:"profile", title:"Account profile", hint:"Business type, age of account, KYC status, volume, current restrictions.",
+   requiredFor:["restriction","onboarding","ato"],
+   chips:["Account active since ___, business type ___.","KYC verified.","Current restriction: ___ placed on ___.","Volume in line with stated business."],
+   negChips:["Profile details do not match business activity."]},
+  {id:"prevNotes", title:"Previous teammate notes", hint:"Earlier reviews, past verdicts, open follow-ups.",
+   requiredFor:["restriction","onboarding","ato"],
+   chips:["Reviewed previous notes; no open concerns.","Previous review on ___: ___.","No previous notes on account."],
+   negChips:["Previous note flagged ___, still unresolved."]},
+  {id:"docs", title:"Documents provided", hint:"List each document, whether it is valid and matches the account.",
+   requiredFor:["restriction","onboarding"],
+   chips:["ID document verified, name matches.","Proof of address verified.","Business registration verified.","Invoices/supplier docs verified."],
+   negChips:["Document missing: ___.","Document appears altered / mismatched."]},
+  {id:"ato", title:"ATO indicators", hint:"Device/IP changes, password/email/phone/bank changes, unusual logins.",
+   requiredFor:["restriction","ato"],
+   chips:["No ATO indicators: no new device/IP, no credential or bank change."],
+   negChips:["New device/IP from ___ before activity.","Email/password/bank changed on ___."]},
+  {id:"money", title:"Money movement", hint:"Inflows/outflows, withdrawals, cash advancing, refund patterns.",
+   requiredFor:["restriction","ato"],
+   chips:["Money movement consistent with business.","No cash advancing pattern."],
+   negChips:["Quick in-out / withdrawal pattern seen.","Possible cash advancing: ___."]},
+  {id:"linked", title:"Linked account checks", hint:"Accounts linked by ID, bank, device, IP, address.",
+   requiredFor:["restriction","onboarding","ato"],
+   chips:["No linked accounts found.","Linked accounts found, all in good standing."],
+   negChips:["Linked to restricted/closed account ___."]},
+  {id:"linkedReview", title:"Linked account review", hint:"Only if linked accounts were found. Review each one.",
+   requiredFor:[], conditional:"linkedFound",
+   chips:["Reviewed linked account ___: no concerns."],
+   negChips:["Linked account ___ shows ___."]},
+  {id:"serviceLog", title:"Service log", hint:"Customer contacts, complaints, disputes, promises made.",
+   requiredFor:["restriction","onboarding","ato"],
+   chips:["Service log reviewed; no relevant contacts.","Seller contacted on ___ about ___."],
+   negChips:["Complaint/dispute in service log: ___."]},
+  {id:"counterparty", title:"Counterparty review", hint:"Only if required (buyers/payers involved in the risky activity).",
+   requiredFor:[], conditional:"counterpartyNeeded",
+   chips:["Counterparties reviewed; no concerns.","Counterparty review not required: ___."],
+   negChips:["Counterparty ___ linked to fraud/chargebacks."]},
+  {id:"fraud", title:"Fraud indicators / other findings", hint:"Anything else that drove the decision.",
+   requiredFor:["restriction","ato"],
+   chips:["No other fraud indicators found."],
+   negChips:["Fraud indicator: ___."]}
+];
+const VERDICTS = {
+  "": "- Select verdict -",
+  lift: "Lift restrictions",
+  partial: "Partial lift",
+  rai: "Request additional information",
+  keep: "Keep restrictions / no change",
+  approve: "Approve onboarding",
+  decline: "Decline / close"
+};
+/* Words that suggest something important was mentioned. Used to cross-check notes. */
+const KEYWORDS = {
+  linkedFound: /\blinked (to|account[s]? found)|\bassociated account/i,
+  counterpartyNeeded: /\bcounterpart|\bbuyer[s]? (involved|complain)|\bchargeback/i
+};
+/* ================= END OF CONFIG ================= */
+
+const $ = s => document.querySelector(s);
+const KEY = "caseNotepad.v1";
+let state = load() || fresh();
+function fresh(){ return {caseId:"",caseType:"restriction",reviewer:localStorage.getItem(KEY+".reviewer")||"",target:20,verdict:"",rationale:"",sec:{},elapsed:0,running:true,started:Date.now()}; }
+function load(){ try{return JSON.parse(localStorage.getItem(KEY));}catch(e){return null;} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(KEY+".reviewer", state.reviewer); }
+const S = id => state.sec[id] || (state.sec[id] = {text:"",status:""});
+
+// header
+Object.entries(CASE_TYPES).forEach(([k,v])=>$("#caseType").add(new Option(v,k)));
+Object.entries(VERDICTS).forEach(([k,v])=>$("#verdict").add(new Option(v,k)));
+["caseId","caseType","reviewer","target","verdict","rationale"].forEach(f=>{
+  const el=$("#"+f); el.value=state[f];
+  el.addEventListener("input",()=>{state[f]=el.value; save(); if(f==="caseType") render(); else check();});
+});
+
+// sections
+function isRequired(sec){
+  if(sec.requiredFor.includes(state.caseType)) return true;
+  if(sec.conditional) return conditionMet(sec.conditional);
+  return false;
+}
+function conditionMet(c){
+  const all = SECTIONS.map(s=>S(s.id).text).join("\n");
+  if(c==="linkedFound") return S("linked").status==="issue" || KEYWORDS.linkedFound.test(S("linked").text) && !/no linked/i.test(S("linked").text);
+  if(c==="counterpartyNeeded") return KEYWORDS.counterpartyNeeded.test(all.replace(S("counterparty").text,""));
+  return false;
+}
+function render(){
+  const wrap=$("#sections"); wrap.innerHTML="";
+  SECTIONS.forEach((sec,i)=>{
+    const d=document.createElement("div"); d.className="sec"; d.id="s-"+sec.id;
+    d.innerHTML=`<h3>${i+1}. ${sec.title} <span class="req" hidden>Required</span>
+      <span class="status">${[["checked","Checked"],["issue","Issue found"],["na","N/A"]].map(([v,l])=>`<button data-v="${v}">${l}</button>`).join("")}</span></h3>
+      <div class="hint">${sec.hint}</div>
+      <textarea placeholder="What did you check and what did you find?"></textarea>
+      <div class="chips">${sec.chips.map(c=>`<button>${c}</button>`).join("")}${(sec.negChips||[]).map(c=>`<button class="neg">${c}</button>`).join("")}</div>`;
+    const ta=d.querySelector("textarea"); ta.value=S(sec.id).text;
+    ta.addEventListener("input",()=>{S(sec.id).text=ta.value; if(ta.value.trim()&&!S(sec.id).status) setStatus(sec.id,"checked",false); save(); check();});
+    d.querySelectorAll(".status button").forEach(b=>b.onclick=()=>setStatus(sec.id, S(sec.id).status===b.dataset.v?"":b.dataset.v));
+    d.querySelectorAll(".chips button").forEach(b=>b.onclick=()=>{
+      ta.value=(ta.value.trim()?ta.value.trim()+" ":"")+b.textContent; S(sec.id).text=ta.value;
+      if(b.classList.contains("neg")) setStatus(sec.id,"issue",false); else if(!S(sec.id).status) setStatus(sec.id,"checked",false);
+      const k=ta.value.indexOf("___"); ta.focus(); if(k>=0) ta.setSelectionRange(k,k+3);
+      save(); check();
+    });
+    wrap.appendChild(d);
+  });
+  check();
+}
+function setStatus(id,v,rerun=true){ S(id).status=v; save(); if(rerun) check(); else paint(); }
+function paint(){
+  SECTIONS.forEach(sec=>{
+    const d=$("#s-"+sec.id), st=S(sec.id).status, req=isRequired(sec);
+    d.querySelectorAll(".status button").forEach(b=>b.classList.toggle("on",b.dataset.v===st));
+    d.querySelector(".req").hidden=!req;
+    d.className="sec "+(st==="checked"?"done":st==="issue"?"issue":st==="na"?"na":req?"missing":"");
+  });
+}
+
+// checker
+function problems(){
+  const out=[]; const sec=id=>S(id);
+  SECTIONS.forEach(s=>{
+    const x=sec(s.id), req=isRequired(s);
+    if(req && !x.status) out.push({lvl:"er",id:s.id,msg:`${s.title}: not checked yet`});
+    else if(req && x.status==="na" && !x.text.trim()) out.push({lvl:"er",id:s.id,msg:`${s.title}: marked N/A, add a reason`});
+    else if(x.status && x.status!=="na" && x.text.trim().length<15) out.push({lvl:"wa",id:s.id,msg:`${s.title}: note is too short`});
+    if(x.text.includes("___")) out.push({lvl:"er",id:s.id,msg:`${s.title}: fill in the blank (___)`});
+    if(!req && s.conditional && conditionMet(s.conditional) && !x.status) out.push({lvl:"er",id:s.id,msg:`${s.title}: required, based on your notes`});
+  });
+  const v=state.verdict, issues=SECTIONS.filter(s=>sec(s.id).status==="issue").map(s=>s.title);
+  if(!state.caseId.trim()) out.push({lvl:"wa",id:null,msg:"Case / Account ID is empty"});
+  if(!v) out.push({lvl:"er",id:"verdict",msg:"No verdict selected"});
+  if(v && !state.rationale.trim()) out.push({lvl:"er",id:"verdict",msg:"Verdict has no rationale"});
+  if((v==="lift"||v==="approve") && issues.length) out.push({lvl:state.rationale.trim().length>30?"wa":"er",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but issues were found in: ${issues.join(", ")}. Explain why in the rationale.`});
+  if((v==="keep"||v==="decline") && !issues.length) out.push({lvl:"wa",id:"verdict",msg:`Verdict is "${VERDICTS[v]}" but no section is marked "Issue found"`});
+  if(v==="rai" && !/\b(request|need|provide|send|submit|missing)/i.test(state.rationale+sec("docs").text)) out.push({lvl:"wa",id:"verdict",msg:"Requesting info: list exactly which documents/info are needed"});
+  if(state.caseType==="onboarding" && (v==="lift"||v==="partial"||v==="keep")) out.push({lvl:"wa",id:"verdict",msg:"Onboarding case: did you mean Approve / Decline / Request info?"});
+  if(state.caseType!=="onboarding" && (v==="approve")) out.push({lvl:"wa",id:"verdict",msg:"Approve onboarding selected on a non-onboarding case"});
+  if(sec("ato").status==="issue" && !/(secure|reset|ato|takeover|contact)/i.test(state.rationale)) out.push({lvl:"wa",id:"verdict",msg:"ATO issue found: rationale should say how the ATO is handled"});
+  return out;
+}
+function check(){
+  paint();
+  const p=problems(), req=SECTIONS.filter(isRequired), done=req.filter(s=>S(s.id).status).length;
+  $("#prog").style.width=(req.length?Math.round(done/req.length*100):0)+"%";
+  $("#progTxt").textContent=`${done}/${req.length} required sections done`;
+  const ul=$("#chk"); ul.innerHTML="";
+  if(!p.length){ ul.innerHTML=`<li class="ok">✔ Everything looks complete</li>`; }
+  p.forEach(x=>{const li=document.createElement("li"); li.className=x.lvl; li.textContent=(x.lvl==="er"?"✖ ":"⚠ ")+x.msg; li.onclick=()=>jump(x.id); ul.appendChild(li);});
+  return p;
+}
+function jump(id){
+  if(!id) return $("#caseId").focus();
+  if(id==="verdict") return $("#verdict").focus();
+  const d=$("#s-"+id); d.scrollIntoView({behavior:"smooth",block:"center"}); d.querySelector("textarea").focus();
+  d.classList.add("flash"); setTimeout(()=>d.classList.remove("flash"),1200);
+}
+
+// final note
+function note(){
+  const L=[]; const lbl={checked:"Checked",issue:"ISSUE",na:"N/A"};
+  L.push(`Case: ${state.caseId||"-"} | ${CASE_TYPES[state.caseType]} | Reviewer: ${state.reviewer||"-"} | Time spent: ${fmt(elapsed())}`);
+  L.push("");
+  SECTIONS.forEach(s=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
+  L.push("");
+  L.push(`Verdict: ${VERDICTS[state.verdict]||"-"}`);
+  L.push(`Rationale: ${state.rationale.trim()||"-"}`);
+  return L.join("\n");
+}
+async function copyNote(){
+  const t=note();
+  try{ await navigator.clipboard.writeText(t); }catch(e){ const ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  toast("Note copied");
+}
+function finish(){
+  const p=check(), er=p.filter(x=>x.lvl==="er"), wa=p.filter(x=>x.lvl==="wa");
+  $("#mTitle").textContent = er.length ? `Wait, you may have missed ${er.length} thing${er.length>1?"s":""}` : wa.length ? "Almost done: please double-check" : "All checks passed";
+  $("#mBody").innerHTML = (p.length?`<ul class="chk">${p.map(x=>`<li class="${x.lvl}" data-id="${x.id}">${x.lvl==="er"?"✖":"⚠"} ${x.msg}</li>`).join("")}</ul>`:"")+`<h3>Final note</h3><pre>${note().replace(/[<&]/g,c=>c==="<"?"&lt;":"&amp;")}</pre>`;
+  $("#mBody").querySelectorAll("li").forEach(li=>li.onclick=()=>{close(); jump(li.dataset.id==="null"?null:li.dataset.id);});
+  $("#mCopy").textContent = er.length ? "Copy anyway" : "Copy final note";
+  $("#modal").classList.add("show");
+}
+const close=()=>$("#modal").classList.remove("show");
+$("#finish").onclick=finish; $("#copy").onclick=copyNote; $("#mBack").onclick=close;
+$("#mCopy").onclick=()=>{copyNote(); if(!problems().some(x=>x.lvl==="er")) state.running=false, tick(), save(); close();};
+$("#modal").onclick=e=>{if(e.target.id==="modal") close();};
+$("#newCase").onclick=()=>{ if(confirm("Clear this case and start a new one?")){ const r=state.reviewer,t=state.target; state=fresh(); state.reviewer=r; state.target=t; save(); ["caseId","caseType","reviewer","target","verdict","rationale"].forEach(f=>$("#"+f).value=state[f]); render(); tick(); $("#caseId").focus(); } };
+
+// timer
+function elapsed(){ return state.elapsed + (state.running? (Date.now()-state.started)/1000 : 0); }
+function fmt(s){ s=Math.floor(s); return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function tick(){
+  const e=elapsed(), t=(+state.target||20)*60, c=$("#clock"); c.textContent=fmt(e);
+  c.className="clock"+(e>t?" over":e>t*0.8?" warn":"");
+  $("#tToggle").textContent=state.running?"Pause":"Resume";
+}
+$("#tToggle").onclick=()=>{ if(state.running){state.elapsed=elapsed();state.running=false;} else {state.started=Date.now();state.running=true;} save(); tick(); };
+setInterval(tick,1000);
+
+// keyboard
+document.addEventListener("keydown",e=>{
+  const ta=document.activeElement.closest&&document.activeElement.closest(".sec");
+  if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==="f"){ e.preventDefault(); finish(); }
+  else if(e.ctrlKey && e.key==="Enter" && ta){ e.preventDefault(); const n=ta.nextElementSibling; (n?n.querySelector("textarea"):$("#verdict")).focus(); }
+  else if(e.altKey && ta && ["1","2","3"].includes(e.key)){ e.preventDefault(); setStatus(ta.id.slice(2),["checked","issue","na"][+e.key-1]); }
+  else if(e.key==="Escape") close();
+});
+function toast(m){ const d=document.createElement("div"); d.textContent=m; d.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#16213a;color:#fff;padding:8px 14px;border-radius:8px;z-index:20"; document.body.appendChild(d); setTimeout(()=>d.remove(),1500); }
+
+render(); tick();
+</script>
+</body>
+</html>
