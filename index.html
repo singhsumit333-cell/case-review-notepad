@@ -142,7 +142,11 @@ const SECTIONS = [
   {id:"docs", title:"8. Documents provided (if any)", hint:"List each document, whether it is valid and matches the account.",
    requiredFor:["onboarding"],
    chips:["No documents provided.","ID document verified, name matches.","Proof of address verified.","Invoices/supplier docs verified."],
-   negChips:["Document missing: ___.","Document appears altered / mismatched."]}
+   negChips:["Document missing: ___.","Document appears altered / mismatched."]},
+  {id:"external", title:"9. External search", hint:"Pointer: Is it a personal account? If business, search name, website, social media, reviews, news, scam reports. Write what you found below.",
+   requiredFor:["restriction","onboarding","ato"],
+   chips:["Personal account: no business presence expected online.","External search done: business found at ___, matches profile.","No adverse news or scam reports found."],
+   negChips:["No online presence for stated business.","Adverse news / scam reports found: ___."]}
 ];
 const VERDICTS = {
   "": "- Select verdict -",
@@ -190,7 +194,7 @@ function render(){
   const wrap=$("#sections"); wrap.innerHTML="";
   SECTIONS.forEach((sec,i)=>{
     const d=document.createElement("div"); d.className="sec"; d.id="s-"+sec.id;
-    d.innerHTML=`<h3>${i+1}. ${sec.title} <span class="req" hidden>Required</span>
+    d.innerHTML=`<h3>${sec.title} <span class="req" hidden>Required</span>
       <span class="status">${[["checked","Checked"],["issue","Issue found"],["na","N/A"]].map(([v,l])=>`<button data-v="${v}">${l}</button>`).join("")}</span></h3>
       <div class="hint">${sec.hint}</div>
       <textarea placeholder="What did you check and what did you find?"></textarea>
