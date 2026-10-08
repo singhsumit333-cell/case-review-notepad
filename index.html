@@ -81,6 +81,7 @@ kbd{background:#eef1f5;border:1px solid #d0d5dd;border-radius:4px;padding:0 4px;
       <h2>Decision</h2>
       <select id="verdict"></select>
       <textarea id="rationale" placeholder="Reasoning: why this decision + any other information"></textarea>
+      <div class="chips" id="rChips"></div>
       <div class="row" style="margin-top:8px">
         <button class="primary" id="finish">Complete note</button>
         <button id="copy">Copy note</button>
@@ -168,7 +169,7 @@ const SECTIONS = [
   {id:"mcc", only:"payout", title:"MCC risk", hint:"MCC code and its risk level: low, medium or high.",
    requiredFor:["payout"],
    chips:["MCC ___: low risk.","MCC ___: medium risk."],
-   negChips:["MCC ___: high risk."]}
+   negChips:["MCC ___: medium-high risk.","MCC ___: high risk."]}
 ];
 /* Review types with their own section list and order. Others use every section without "only". */
 const ORDER = {
@@ -197,6 +198,8 @@ const VERDICTS_FOR = {
 const KEYWORDS = {
   counterpartyNeeded: /\bcounterpart|\bbuyer[s]? (involved|complain)|\bchargeback/i
 };
+/* One-click phrases under the Reasoning box */
+const REASON_CHIPS = ["Account is low risk and payout usage is also low risk.","Payout usage is not appropriate for the stated business.","Payout usage is high risk."];
 /* ================= END OF CONFIG ================= */
 
 const $ = s => document.querySelector(s);
@@ -355,6 +358,11 @@ document.addEventListener("keydown",e=>{
 });
 function toast(m){ const d=document.createElement("div"); d.textContent=m; d.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#16213a;color:#fff;padding:8px 14px;border-radius:8px;z-index:20"; document.body.appendChild(d); setTimeout(()=>d.remove(),1500); }
 
+$("#rChips").innerHTML=REASON_CHIPS.map(c=>`<button>${c}</button>`).join("");
+$("#rChips").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  const ta=$("#rationale"); ta.value=(ta.value.trim()?ta.value.trim()+" ":"")+b.textContent; state.rationale=ta.value;
+  ta.focus(); save(); check();
+});
 render(); tick();
 </script>
 </body>
