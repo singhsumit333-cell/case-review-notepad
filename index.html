@@ -310,8 +310,6 @@ function jump(id){
 // final note
 function note(){
   const L=[]; const lbl={checked:"Checked",issue:"ISSUE",na:"N/A"};
-  L.push(`Case: ${state.caseId||"-"} | ${CASE_TYPES[state.caseType]} | Reviewer: ${state.reviewer||"-"} | Time spent: ${fmt(elapsed())}`);
-  L.push("");
   active().forEach((s,i)=>{const x=S(s.id); if(!x.status && !x.text.trim()) return; L.push(`${s.title} [${lbl[x.status]||"-"}]: ${x.text.trim()||"-"}`);});
   L.push("");
   L.push(`Decision: ${VERDICTS[state.verdict]||"-"}`);
