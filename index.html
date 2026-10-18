@@ -152,24 +152,24 @@ const SECTIONS = [
   /* ---- Payout review only ---- */
   {id:"acctAge", only:"payout", title:"Account age", hint:"Is the account newly created or old? Note the creation date.",
    requiredFor:["payout"],
-   chips:["Old account, created on ___.","Account created on ___ (___ days old)."],
-   negChips:["Newly created account (___ days old)."]},
+   chips:["Old account, created on ___.","Account created on ___ (___ days old).","Old account."],
+   negChips:["Newly created account (___ days old).","Newly created account."]},
   {id:"email", only:"payout", title:"Email domain", hint:"Is the email from a free domain (Gmail, Yahoo, Outlook...) or a business domain?",
    requiredFor:["payout"],
    chips:["Business email domain (___), matches the business.","Free email domain (___)."],
    negChips:["Email domain does not match the business."]},
   {id:"processing", only:"payout", title:"Processing", hint:"How much processing is on the account: amount, number of transactions, period.",
    requiredFor:["payout"],
-   chips:["Processing of ___ over ___ (___ transactions).","Processing in line with the business model."],
+   chips:["Processing of ___ over ___ (___ transactions).","Processing in line with the business model.","Average processing."],
    negChips:["Very low / no processing history.","Sudden spike in processing: ___."]},
   {id:"bizModel", only:"payout", title:"Business model verification", hint:"Is the business model verified? A website is not required.",
    requiredFor:["payout"],
-   chips:["Business model verified: ___.","Website: ___ (optional)."],
+   chips:["Business model verified: ___.","Business model is verified.","No risk noted on business model.","Website: ___ (optional)."],
    negChips:["Business model not verified."]},
-  {id:"mcc", only:"payout", title:"MCC risk", hint:"MCC code and its risk level: low, medium or high.",
+  {id:"mcc", only:"payout", title:"MCC risk", hint:"MCC risk level: low, medium, medium-high or high.",
    requiredFor:["payout"],
-   chips:["MCC ___: low risk.","MCC ___: medium risk."],
-   negChips:["MCC ___: medium-high risk.","MCC ___: high risk."]}
+   chips:["MCC: low risk.","MCC: medium risk."],
+   negChips:["MCC: medium-high risk.","MCC: high risk."]}
 ];
 /* Review types with their own section list and order. Others use every section without "only". */
 const ORDER = {
